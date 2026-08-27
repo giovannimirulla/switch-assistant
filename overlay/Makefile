@@ -23,6 +23,10 @@ CFLAGS += -D__SWITCH__
 # raw serviceDispatchIn call used by vi_add_to_layer_stack() in main.c.
 # Use TOPDIR because the recursive build runs with CURDIR=overlay/build.
 CFLAGS += -include $(TOPDIR)/include/vi_compat.h
+# Diagnostic shim: trace the first framebufferBegin/eventWait/framebufferEnd
+# calls so we can identify the exact first-frame operation preceding the HOS
+# 22.5.0 am crash. Logs to sdmc:/switch/switch-ha/overlay-frame.log.
+CFLAGS += -include $(TOPDIR)/include/frame_diag.h
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
 LDFLAGS := -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
