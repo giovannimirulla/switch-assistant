@@ -21,7 +21,8 @@ CFLAGS += -D__SWITCH__
 # the layer to multiple VI stacks. On newer HOS versions this appears to be
 # unsafe and can crash am. Force-include a tiny shim that neutralizes only the
 # raw serviceDispatchIn call used by vi_add_to_layer_stack() in main.c.
-CFLAGS += -include $(CURDIR)/include/vi_compat.h
+# Use TOPDIR because the recursive build runs with CURDIR=overlay/build.
+CFLAGS += -include $(TOPDIR)/include/vi_compat.h
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
 LDFLAGS := -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
