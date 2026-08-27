@@ -1,0 +1,38 @@
+name: Test Build
+
+on:
+  push:
+    branches:
+      - "fix/notification-overlay-vi"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build test NRO
+        run: |
+          set -euo pipefail
+          docker pull devkitpro/devkita64
+          docker run --rm -v "$PWD:/workspace" -w /workspace/sysmodule devkitpro/devkita64 /bin/bash -lc "make install-layout"
+          docker run --rm -v "$PWD:/workspace" -w /workspace/overlay devkitpro/devkita64 /bin/bash -lc "make"
+          docker run --rm -v "$PWD:/workspace" -w /workspace/overlay-loader devkitpro/devkita64 /bin/bash -lc "make install-layout"
+          mkdir -p romfs/sysmodule romfs/overlay-loader romfs/overlay
+          cp sysmodule/atmosphere/contents/00FF000053484101/exefs.nsp romfs/sysmodule/exefs.nsp
+          : > romfs/sysmodule/boot2.flag
+          cp overlay-loader/atmosphere/contents/00FF000053484102/exefs.nsp romfs/overlay-loader/exefs.nsp
+          : > romfs/overlay-loader/boot2.flag
+          cp overlay/switch-ha-overlay.ovl romfs/overlay/switch-ha-overlay.ovl
+          rm -rf build switch-ha.elf switch-ha.nro
+          docker run --rm -v "$PWD:/workspace" -w /workspace devkitpro/devkita64 /bin/bash -lc "make"
+
+      - name: Upload test NRO
+        uses: actions/upload-artifact@v4
+        with:
+          name: switch-ha-test
+          path: switch-ha.nro
