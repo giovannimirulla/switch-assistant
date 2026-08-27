@@ -17,6 +17,10 @@ ARCH := -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE
 
 CFLAGS := -g -Wall -O2 -ffunction-sections $(ARCH)
 CFLAGS += -D__SWITCH__ -DVERSION=\"v1.0.0-switch-ha\"
+# HOS 22.5.0 leaves less headroom in the system memory pool. The loader's
+# original 6 MiB heap request can contribute to 0x10801/2001-0132 failures in
+# system processes such as am. Clamp this loader-only heap request to 2 MiB.
+CFLAGS += -include $(TOPDIR)/include/heap_compat.h
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
 LDFLAGS := -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-wrap,exit -Wl,-Map,$(notdir $*.map)
