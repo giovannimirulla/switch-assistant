@@ -36,7 +36,10 @@ export APP_JSON := $(CURDIR)/$(CONFIG_JSON)
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
 export VPATH := $(CURDIR)/source $(CURDIR)/../source
-export OFILES := main.o app_state.o config.o mqtt_client.o title_cache.o screen_stream.o
+# Diagnostic build: replace the real grcd/RTSP implementation with a no-op
+# screen_stream implementation so the notification overlay can be tested in
+# complete isolation from capture services on HOS 22.5.0.
+export OFILES := main.o app_state.o config.o mqtt_client.o title_cache.o screen_stream_diag.o
 
 export INCLUDE := -I$(CURDIR)/../include \
 	$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
