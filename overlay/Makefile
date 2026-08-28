@@ -27,6 +27,9 @@ CFLAGS += -include $(TOPDIR)/include/vi_compat.h
 # calls so we can identify the exact first-frame operation preceding the HOS
 # 22.5.0 am crash. Logs to sdmc:/switch/switch-ha/overlay-frame.log.
 CFLAGS += -include $(TOPDIR)/include/frame_diag.h
+# Diagnostic shim: bypass only the hard-coded 25 second overlay graphics boot
+# delay. Other sleeps remain untouched so post-init behavior stays unchanged.
+CFLAGS += -include $(TOPDIR)/include/boot_delay_compat.h
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS := -g $(ARCH)
 LDFLAGS := -specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
