@@ -28,24 +28,26 @@ static inline FILE *frame_diag_fopen(const char *path, const char *mode) {
 }
 
 /*
- * Diagnostic BEGIN+END mode.
- * framebufferBegin() acquires the real buffer, but callers receive a dummy buffer,
- * so memset/drawing cannot touch framebuffer memory. framebufferEnd() is then
- * called for real to release/present the acquired buffer. VSync wait stays bypassed.
- * This isolates the begin/end queue lifecycle from pixel writes and eventWait().
+ * Diagnostic ONEFRAME mode.
+ * Exactly one real framebufferBegin/framebufferEnd pair is executed. The caller
+ * always receives a dummy buffer, so no pixel write touches the real framebuffer.
+ * All later begin/end calls are bypassed. VSync wait is bypassed throughout.
  */
 static inline void *frame_diag_framebufferBegin(Framebuffer *fb, u32 *out_stride) {
     static unsigned char dummy[FRAME_DIAG_DUMMY_SIZE] __attribute__((aligned(0x1000)));
     static unsigned int count = 0;
 
-    if (count < 8) frame_diag_log("BEGINEND framebufferBegin enter", count);
-    void *real_pixels = framebufferBegin(fb, out_stride);
-    if (count < 8) {
-        frame_diag_log("BEGINEND framebufferBegin return", (long long)(uintptr_t)real_pixels);
-        frame_diag_log("BEGINEND stride", out_stride ? (long long)*out_stride : -1);
-        frame_diag_log("BEGINEND fb_size", fb ? (long long)fb->fb_size : -1);
-        frame_diag_log("BEGINEND returning dummy", (long long)(uintptr_t)dummy);
+    if (count == 0) {
+        frame_diag_log("ONEFRAME framebufferBegin real enter", 0);
+        void *real_pixels = framebufferBegin(fb, out_stride);
+        frame_diag_log("ONEFRAME framebufferBegin real return", (long long)(uintptr_t)real_pixels);
+        frame_diag_log("ONEFRAME stride", out_stride ? (long long)*out_stride : -1);
+        frame_diag_log("ONEFRAME fb_size", fb ? (long long)fb->fb_size : -1);
+    } else {
+        if (out_stride) *out_stride = 1280;
+        if (count < 8) frame_diag_log("ONEFRAME framebufferBegin bypass", count);
     }
+
     count++;
     return dummy;
 }
@@ -53,16 +55,22 @@ static inline void *frame_diag_framebufferBegin(Framebuffer *fb, u32 *out_stride
 static inline Result frame_diag_eventWait(Event *event, u64 timeout) {
     (void)event;
     static unsigned int count = 0;
-    if (count < 8) frame_diag_log("BEGINEND eventWait bypass", (long long)timeout);
+    if (count < 8) frame_diag_log("ONEFRAME eventWait bypass", (long long)timeout);
     count++;
     return 0;
 }
 
 static inline void frame_diag_framebufferEnd(Framebuffer *fb) {
     static unsigned int count = 0;
-    if (count < 8) frame_diag_log("BEGINEND framebufferEnd enter", count);
-    framebufferEnd(fb);
-    if (count < 8) frame_diag_log("BEGINEND framebufferEnd return", count);
+
+    if (count == 0) {
+        frame_diag_log("ONEFRAME framebufferEnd real enter", 0);
+        framebufferEnd(fb);
+        frame_diag_log("ONEFRAME framebufferEnd real return", 0);
+    } else if (count < 8) {
+        frame_diag_log("ONEFRAME framebufferEnd bypass", count);
+    }
+
     count++;
 }
 
