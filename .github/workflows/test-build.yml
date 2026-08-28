@@ -18,6 +18,8 @@ jobs:
       - name: Build test NRO
         run: |
           set -euo pipefail
+          sed -i 's/#define GRAPHICS_BOOT_DELAY_MS 25000/#define GRAPHICS_BOOT_DELAY_MS 0/' overlay/source/main.c
+          grep 'GRAPHICS_BOOT_DELAY_MS' overlay/source/main.c
           docker pull devkitpro/devkita64
           docker run --rm -v "$PWD:/workspace" -w /workspace/sysmodule devkitpro/devkita64 /bin/bash -lc "make install-layout"
           docker run --rm -v "$PWD:/workspace" -w /workspace/overlay devkitpro/devkita64 /bin/bash -lc "make"
